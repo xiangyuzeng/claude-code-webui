@@ -17,6 +17,15 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@shared": resolve(__dirname, "../shared"),
+        "@": resolve(__dirname, "src"),
+        "~types": resolve(__dirname, "src/types"),
+        "~components": resolve(__dirname, "src/components"),
+        "~features": resolve(__dirname, "src/features"),
+        "~hooks": resolve(__dirname, "src/hooks"),
+        "~utils": resolve(__dirname, "src/utils"),
+        "~contexts": resolve(__dirname, "src/contexts"),
+        "~i18n": resolve(__dirname, "src/i18n"),
+        "~theme": resolve(__dirname, "src/theme"),
       },
     },
     server: {

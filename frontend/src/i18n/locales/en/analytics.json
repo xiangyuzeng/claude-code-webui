@@ -1,0 +1,42 @@
+{
+  "title": "Analytics Dashboard",
+  "dataSources": {
+    "title": "Data Sources",
+    "ec2": "EC2 Instances",
+    "k8s": "Kubernetes Clusters",
+    "rds": "RDS Databases",
+    "redis": "Redis Cache",
+    "status": "Connection Status"
+  },
+  "metrics": {
+    "title": "System Metrics",
+    "cpu": "CPU Usage",
+    "memory": "Memory Usage",
+    "connections": "Active Connections",
+    "latency": "Response Latency",
+    "storage": "Storage Usage",
+    "requests": "Request Rate"
+  },
+  "departments": {
+    "title": "Department Dashboards",
+    "marketing": "Marketing Analytics",
+    "product": "Product Insights",
+    "supplyChain": "Supply Chain",
+    "operations": "Operations"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "newQuery": "New Query",
+    "viewLogs": "View Logs",
+    "systemHealth": "System Health",
+    "alerts": "Alerts"
+  },
+  "timeRange": {
+    "title": "Time Range",
+    "last1h": "Last 1 hour",
+    "last24h": "Last 24 hours",
+    "last7d": "Last 7 days",
+    "last30d": "Last 30 days",
+    "custom": "Custom"
+  }
+}

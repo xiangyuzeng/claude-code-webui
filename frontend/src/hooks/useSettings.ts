@@ -21,5 +21,25 @@ export function useEnterBehavior() {
   return { enterBehavior, toggleEnterBehavior };
 }
 
+export function useLanguage() {
+  const { language, setLanguage } = useSettings();
+  return { language, setLanguage };
+}
+
+export function useFontSize() {
+  const { fontSize, setFontSize } = useSettings();
+  return { fontSize, setFontSize };
+}
+
+export function useCompactMode() {
+  const { compactMode, setCompactMode } = useSettings();
+  return { compactMode, setCompactMode };
+}
+
 // Re-export types for convenience
-export type { Theme, EnterBehavior } from "../types/settings";
+export type {
+  Theme,
+  EnterBehavior,
+  Language,
+  FontSize,
+} from "../types/settings";

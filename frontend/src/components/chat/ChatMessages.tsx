@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { AllMessage } from "../../types";
 import {
   isChatMessage,
@@ -29,6 +30,7 @@ interface ChatMessagesProps {
 export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
@@ -82,7 +84,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
       className="flex-1 overflow-y-auto bg-white/70 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 p-3 sm:p-6 mb-3 sm:mb-6 rounded-2xl shadow-sm backdrop-blur-sm flex flex-col"
     >
       {messages.length === 0 ? (
-        <EmptyState />
+        <EmptyState t={t} />
       ) : (
         <>
           {/* Spacer div to push messages to the bottom */}
@@ -96,7 +98,11 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   );
 }
 
-function EmptyState() {
+interface EmptyStateProps {
+  t: (key: string) => string;
+}
+
+function EmptyState({ t }: EmptyStateProps) {
   return (
     <div className="flex-1 flex items-center justify-center text-center text-slate-500 dark:text-slate-400">
       <div>
@@ -105,9 +111,9 @@ function EmptyState() {
             💬
           </span>
         </div>
-        <p className="text-lg font-medium">Start a conversation with Claude</p>
+        <p className="text-lg font-medium">{t("chat.emptyStateTitle")}</p>
         <p className="text-sm mt-2 opacity-80">
-          Type your message below to begin
+          {t("chat.emptyStateSubtitle")}
         </p>
       </div>
     </div>

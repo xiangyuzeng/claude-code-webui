@@ -1,97 +1,253 @@
+import { useState } from "react";
 import {
-  SunIcon,
-  MoonIcon,
-  CommandLineIcon,
-} from "@heroicons/react/24/outline";
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Divider,
+  Switch,
+  FormControlLabel,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from "@mui/material";
+import KeyboardIcon from "@mui/icons-material/Keyboard";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import TextFieldsIcon from "@mui/icons-material/TextFields";
+import StorageIcon from "@mui/icons-material/Storage";
+import { useTranslation } from "react-i18next";
 import { useSettings } from "../../hooks/useSettings";
+import type { FontSize } from "../../types/settings";
 
 export function GeneralSettings() {
-  const { theme, enterBehavior, toggleTheme, toggleEnterBehavior } =
-    useSettings();
+  const { t } = useTranslation("settings");
+  const {
+    enterBehavior,
+    toggleEnterBehavior,
+    fontSize,
+    setFontSize,
+    compactMode,
+    setCompactMode,
+  } = useSettings();
+
+  // Local state for additional settings (these would normally be persisted)
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [showTimestamps, setShowTimestamps] = useState(true);
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ py: 1 }}>
       {/* Live region for screen reader announcements */}
-      <div aria-live="polite" className="sr-only" id="settings-announcements">
-        {theme === "light" ? "Light mode enabled" : "Dark mode enabled"}.{" "}
+      <Box
+        component="div"
+        aria-live="polite"
+        sx={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: "hidden",
+          clip: "rect(0, 0, 0, 0)",
+          whiteSpace: "nowrap",
+          border: 0,
+        }}
+      >
         {enterBehavior === "send"
           ? "Enter key sends messages"
           : "Enter key creates newlines"}
         .
-      </div>
+      </Box>
 
-      <div>
-        <h3 className="text-lg font-medium text-slate-800 dark:text-slate-100 mb-4">
-          General Settings
-        </h3>
+      <Typography variant="h6" fontWeight={600} gutterBottom>
+        {t("general")}
+      </Typography>
 
-        {/* Theme Setting */}
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-              Theme
-            </label>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleTheme}
-                className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left flex-1"
-                role="switch"
-                aria-checked={theme === "dark"}
-                aria-label={`Theme toggle. Currently set to ${theme} mode. Click to switch to ${theme === "light" ? "dark" : "light"} mode.`}
-              >
-                {theme === "light" ? (
-                  <SunIcon className="w-5 h-5 text-yellow-500" />
-                ) : (
-                  <MoonIcon className="w-5 h-5 text-blue-400" />
-                )}
-                <div>
-                  <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                    {theme === "light" ? "Light Mode" : "Dark Mode"}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    Click to switch to {theme === "light" ? "dark" : "light"}{" "}
-                    mode
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
+      {/* Enter Behavior Setting */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+          {t("behavior.enterKey")}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {t("behavior.enterDescription")}
+        </Typography>
 
-          {/* Enter Behavior Setting */}
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-              Enter Key Behavior
-            </label>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleEnterBehavior}
-                className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left flex-1"
-                role="switch"
-                aria-checked={enterBehavior === "send"}
-                aria-label={`Enter key behavior toggle. Currently set to ${enterBehavior === "send" ? "send message" : "newline"}. Click to switch behavior.`}
-              >
-                <CommandLineIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                <div>
-                  <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                    {enterBehavior === "send"
-                      ? "Enter to Send"
-                      : "Enter for Newline"}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {enterBehavior === "send"
-                      ? "Enter sends message, Shift+Enter for newline"
-                      : "Enter adds newline, Shift+Enter sends message"}
-                  </div>
-                </div>
-              </button>
-            </div>
-            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              Controls how the Enter key behaves when typing messages in the
-              chat input.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 0,
+            overflow: "hidden",
+          }}
+        >
+          <Button
+            fullWidth
+            onClick={toggleEnterBehavior}
+            sx={{
+              justifyContent: "flex-start",
+              px: 2,
+              py: 1.5,
+              textTransform: "none",
+              color: "text.primary",
+            }}
+            role="switch"
+            aria-checked={enterBehavior === "send"}
+            aria-label={`Enter key behavior. Currently set to ${enterBehavior === "send" ? "send message" : "newline"}.`}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                width: "100%",
+              }}
+            >
+              <KeyboardIcon sx={{ color: "text.secondary" }} />
+              <Box sx={{ textAlign: "left" }}>
+                <Typography variant="body2" fontWeight={500}>
+                  {enterBehavior === "send"
+                    ? t("behavior.enterSend")
+                    : t("behavior.enterNewline")}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {enterBehavior === "send"
+                    ? "Shift+Enter for newline"
+                    : "Shift+Enter to send"}
+                </Typography>
+              </Box>
+            </Box>
+          </Button>
+        </Paper>
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* Display Settings */}
+      <Typography
+        variant="h6"
+        fontWeight={600}
+        gutterBottom
+        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+      >
+        <TextFieldsIcon fontSize="small" />
+        {t("display.title", "Display")}
+      </Typography>
+
+      <Box sx={{ mb: 2 }}>
+        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+          <InputLabel>{t("display.fontSize", "Font Size")}</InputLabel>
+          <Select
+            value={fontSize}
+            label={t("display.fontSize", "Font Size")}
+            onChange={(e) => setFontSize(e.target.value as FontSize)}
+          >
+            <MenuItem value="small">{t("display.small", "Small")}</MenuItem>
+            <MenuItem value="medium">{t("display.medium", "Medium")}</MenuItem>
+            <MenuItem value="large">{t("display.large", "Large")}</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={compactMode}
+              onChange={(e) => setCompactMode(e.target.checked)}
+              size="small"
+            />
+          }
+          label={t("display.compactMode", "Compact Mode")}
+        />
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={showTimestamps}
+              onChange={(e) => setShowTimestamps(e.target.checked)}
+              size="small"
+            />
+          }
+          label={t("display.showTimestamps", "Show Timestamps")}
+        />
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* Notifications */}
+      <Typography
+        variant="h6"
+        fontWeight={600}
+        gutterBottom
+        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+      >
+        <NotificationsIcon fontSize="small" />
+        {t("notifications.title", "Notifications")}
+      </Typography>
+
+      <Box sx={{ mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={soundEnabled}
+              onChange={(e) => setSoundEnabled(e.target.checked)}
+              size="small"
+            />
+          }
+          label={t("notifications.sound", "Sound notifications")}
+        />
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* Data & Storage */}
+      <Typography
+        variant="h6"
+        fontWeight={600}
+        gutterBottom
+        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+      >
+        <StorageIcon fontSize="small" />
+        {t("storage.title", "Data & Storage")}
+      </Typography>
+
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => {
+            if (
+              window.confirm(
+                t(
+                  "storage.clearHistoryConfirm",
+                  "Are you sure you want to clear chat history?",
+                ),
+              )
+            ) {
+              localStorage.removeItem("chat-history");
+            }
+          }}
+        >
+          {t("storage.clearHistory", "Clear History")}
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          color="error"
+          onClick={() => {
+            if (
+              window.confirm(
+                t(
+                  "storage.resetConfirm",
+                  "Are you sure you want to reset all settings?",
+                ),
+              )
+            ) {
+              localStorage.clear();
+              window.location.reload();
+            }
+          }}
+        >
+          {t("storage.resetSettings", "Reset All Settings")}
+        </Button>
+      </Box>
+    </Box>
   );
 }

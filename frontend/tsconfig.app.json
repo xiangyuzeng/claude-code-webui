@@ -26,7 +26,16 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["../shared/*"]
+      "@shared/*": ["../shared/*"],
+      "@/*": ["src/*"],
+      "~types/*": ["src/types/*"],
+      "~components/*": ["src/components/*"],
+      "~features/*": ["src/features/*"],
+      "~hooks/*": ["src/hooks/*"],
+      "~utils/*": ["src/utils/*"],
+      "~contexts/*": ["src/contexts/*"],
+      "~i18n/*": ["src/i18n/*"],
+      "~theme/*": ["src/theme/*"]
     }
   },
   "include": ["src"]

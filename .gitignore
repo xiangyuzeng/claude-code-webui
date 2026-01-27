@@ -1,7 +1,15 @@
 .claude/
 !.claude/settings.json
+.env
+.env.local
+
+.DS_Store
+.vscode/
 
 # Build artifacts
+frontend/dist/
+frontend/build/
+
 dist/
 backend/dist/
 
@@ -10,3 +18,4 @@ frontend/demo-recordings/
 frontend/test-results/
 frontend/playwright-report/
 frontend/playwright/.cache/
+

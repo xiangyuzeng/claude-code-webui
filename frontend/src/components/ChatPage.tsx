@@ -1,21 +1,37 @@
 import { useEffect, useCallback, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import {
+  Box,
+  Typography,
+  IconButton,
+  ToggleButtonGroup,
+  ToggleButton,
+  CircularProgress,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import HistoryIcon from "@mui/icons-material/History";
+import SettingsIcon from "@mui/icons-material/Settings";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import AddIcon from "@mui/icons-material/Add";
+import HomeIcon from "@mui/icons-material/Home";
+import { useTranslation } from "react-i18next";
+import { QuickActions } from "./chat/QuickActions";
 import type {
   ChatRequest,
   ChatMessage,
   ProjectInfo,
   PermissionMode,
 } from "../types";
+import type { Language } from "../types/settings";
 import { useClaudeStreaming } from "../hooks/useClaudeStreaming";
 import { useChatState } from "../hooks/chat/useChatState";
 import { usePermissions } from "../hooks/chat/usePermissions";
 import { usePermissionMode } from "../hooks/chat/usePermissionMode";
 import { useAbortController } from "../hooks/chat/useAbortController";
 import { useAutoHistoryLoader } from "../hooks/useHistoryLoader";
-import { SettingsButton } from "./SettingsButton";
+import { useSettings, useLanguage } from "../hooks/useSettings";
 import { SettingsModal } from "./SettingsModal";
-import { HistoryButton } from "./chat/HistoryButton";
 import { ChatInput } from "./chat/ChatInput";
 import { ChatMessages } from "./chat/ChatMessages";
 import { HistoryView } from "./HistoryView";
@@ -30,16 +46,15 @@ export function ChatPage() {
   const [searchParams] = useSearchParams();
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { t } = useTranslation();
+  const { theme, toggleTheme } = useSettings();
+  const { language, setLanguage } = useLanguage();
 
   // Extract and normalize working directory from URL
   const workingDirectory = (() => {
     const rawPath = location.pathname.replace("/projects", "");
     if (!rawPath) return undefined;
-
-    // URL decode the path
     const decodedPath = decodeURIComponent(rawPath);
-
-    // Normalize Windows paths (remove leading slash from /C:/... format)
     return normalizeWindowsPath(decodedPath);
   })();
 
@@ -51,31 +66,19 @@ export function ChatPage() {
 
   const { processStreamLine } = useClaudeStreaming();
   const { abortRequest, createAbortHandler } = useAbortController();
-
-  // Permission mode state management
   const { permissionMode, setPermissionMode } = usePermissionMode();
 
-  // Get encoded name for current working directory
   const getEncodedName = useCallback(() => {
-    if (!workingDirectory || !projects.length) {
-      return null;
-    }
-
+    if (!workingDirectory || !projects.length) return null;
     const project = projects.find((p) => p.path === workingDirectory);
-
-    // Normalize paths for comparison (handle Windows path issues)
     const normalizedWorking = normalizeWindowsPath(workingDirectory);
     const normalizedProject = projects.find(
       (p) => normalizeWindowsPath(p.path) === normalizedWorking,
     );
-
-    // Use normalized result if exact match fails
     const finalProject = project || normalizedProject;
-
     return finalProject?.encodedName || null;
   }, [workingDirectory, projects]);
 
-  // Load conversation history if sessionId is provided
   const {
     messages: historyMessages,
     loading: historyLoading,
@@ -86,7 +89,6 @@ export function ChatPage() {
     sessionId || undefined,
   );
 
-  // Initialize chat state with loaded history
   const {
     messages,
     input,
@@ -129,10 +131,8 @@ export function ChatPage() {
 
   const handlePermissionError = useCallback(
     (toolName: string, patterns: string[], toolUseId: string) => {
-      // Check if this is an ExitPlanMode permission error
       if (patterns.includes("ExitPlanMode")) {
-        // For ExitPlanMode, show plan permission interface instead of regular permission
-        showPlanModeRequest(""); // Empty plan content since it was already displayed
+        showPlanModeRequest("");
       } else {
         showPermissionRequest(toolName, patterns, toolUseId);
       }
@@ -152,7 +152,6 @@ export function ChatPage() {
 
       const requestId = generateRequestId();
 
-      // Only add user message to chat if not hidden
       if (!hideUserMessage) {
         const userMessage: ChatMessage = {
           type: "chat",
@@ -185,7 +184,6 @@ export function ChatPage() {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
 
-        // Local state for this streaming session
         let localHasReceivedInit = false;
         let shouldAbort = false;
 
@@ -266,18 +264,13 @@ export function ChatPage() {
     abortRequest(currentRequestId, isLoading, resetRequestState);
   }, [abortRequest, currentRequestId, isLoading, resetRequestState]);
 
-  // Permission request handlers
   const handlePermissionAllow = useCallback(() => {
     if (!permissionRequest) return;
-
-    // Add all patterns temporarily
     let updatedAllowedTools = allowedTools;
     permissionRequest.patterns.forEach((pattern) => {
       updatedAllowedTools = allowToolTemporary(pattern, updatedAllowedTools);
     });
-
     closePermissionRequest();
-
     if (currentSessionId) {
       sendMessage("continue", updatedAllowedTools, true);
     }
@@ -292,15 +285,11 @@ export function ChatPage() {
 
   const handlePermissionAllowPermanent = useCallback(() => {
     if (!permissionRequest) return;
-
-    // Add all patterns permanently
     let updatedAllowedTools = allowedTools;
     permissionRequest.patterns.forEach((pattern) => {
       updatedAllowedTools = allowToolPermanent(pattern, updatedAllowedTools);
     });
-
     closePermissionRequest();
-
     if (currentSessionId) {
       sendMessage("continue", updatedAllowedTools, true);
     }
@@ -317,7 +306,6 @@ export function ChatPage() {
     closePermissionRequest();
   }, [closePermissionRequest]);
 
-  // Plan mode request handlers
   const handlePlanAcceptWithEdits = useCallback(() => {
     updatePermissionMode("acceptEdits");
     closePlanModeRequest();
@@ -351,7 +339,6 @@ export function ChatPage() {
     closePlanModeRequest();
   }, [updatePermissionMode, closePlanModeRequest]);
 
-  // Create permission data for inline permission interface
   const permissionData = permissionRequest
     ? {
         patterns: permissionRequest.patterns,
@@ -361,7 +348,6 @@ export function ChatPage() {
       }
     : undefined;
 
-  // Create plan permission data for plan mode interface
   const planPermissionData = planModeRequest
     ? {
         onAcceptWithEdits: handlePlanAcceptWithEdits,
@@ -375,30 +361,6 @@ export function ChatPage() {
     searchParams.set("view", "history");
     navigate({ search: searchParams.toString() });
   }, [navigate]);
-
-  const handleSettingsClick = useCallback(() => {
-    setIsSettingsOpen(true);
-  }, []);
-
-  const handleSettingsClose = useCallback(() => {
-    setIsSettingsOpen(false);
-  }, []);
-
-  // Load projects to get encodedName mapping
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const response = await fetch(getProjectsUrl());
-        if (response.ok) {
-          const data = await response.json();
-          setProjects(data.projects || []);
-        }
-      } catch (error) {
-        console.error("Failed to load projects:", error);
-      }
-    };
-    loadProjects();
-  }, []);
 
   const handleBackToChat = useCallback(() => {
     navigate({ search: "" });
@@ -414,13 +376,28 @@ export function ChatPage() {
     navigate("/");
   }, [navigate]);
 
-  const handleBackToProjectChat = useCallback(() => {
-    if (workingDirectory) {
-      navigate(`/projects${workingDirectory}`);
-    }
-  }, [navigate, workingDirectory]);
+  const handleLanguageChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newLang: Language | null,
+  ) => {
+    if (newLang) setLanguage(newLang);
+  };
 
-  // Handle global keyboard shortcuts
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const response = await fetch(getProjectsUrl());
+        if (response.ok) {
+          const data = await response.json();
+          setProjects(data.projects || []);
+        }
+      } catch (error) {
+        console.error("Failed to load projects:", error);
+      }
+    };
+    loadProjects();
+  }, []);
+
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === KEYBOARD_SHORTCUTS.ABORT && isLoading && currentRequestId) {
@@ -428,89 +405,302 @@ export function ChatPage() {
         handleAbort();
       }
     };
-
     document.addEventListener("keydown", handleGlobalKeyDown);
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
   }, [isLoading, currentRequestId, handleAbort]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto p-3 sm:p-6 h-screen flex flex-col">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background:
+          theme === "dark"
+            ? "linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%)"
+            : "linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f5f7ff 100%)",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* Animated background grid */}
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage:
+            theme === "dark"
+              ? `linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                 linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px)`
+              : `linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+                 linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)`,
+          backgroundSize: "50px 50px",
+          animation: "gridMove 20s linear infinite",
+          "@keyframes gridMove": {
+            "0%": { transform: "translate(0, 0)" },
+            "100%": { transform: "translate(50px, 50px)" },
+          },
+        }}
+      />
+
+      {/* Glowing orbs */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: "10%",
+          left: "5%",
+          width: 300,
+          height: 300,
+          borderRadius: "50%",
+          background:
+            theme === "dark"
+              ? "radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)"
+              : "radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%)",
+          filter: "blur(40px)",
+          animation: "float 6s ease-in-out infinite",
+          "@keyframes float": {
+            "0%, 100%": { transform: "translateY(0)" },
+            "50%": { transform: "translateY(-20px)" },
+          },
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: "10%",
+          right: "5%",
+          width: 400,
+          height: 400,
+          borderRadius: "50%",
+          background:
+            theme === "dark"
+              ? "radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)"
+              : "radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%)",
+          filter: "blur(40px)",
+          animation: "float 8s ease-in-out infinite reverse",
+        }}
+      />
+
+      {/* Content */}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          maxWidth: 1000,
+          mx: "auto",
+          px: { xs: 2, sm: 3 },
+          py: { xs: 2, sm: 3 },
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4 sm:mb-8 flex-shrink-0">
-          <div className="flex items-center gap-4">
-            {isHistoryView && (
-              <button
-                onClick={handleBackToChat}
-                className="p-2 rounded-lg bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 backdrop-blur-sm shadow-sm hover:shadow-md"
-                aria-label="Back to chat"
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+            flexShrink: 0,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            {(isHistoryView || isLoadedConversation) && (
+              <IconButton
+                onClick={isHistoryView ? handleBackToChat : handleBackToHistory}
+                sx={{
+                  color: theme === "dark" ? "grey.400" : "grey.600",
+                  bgcolor:
+                    theme === "dark"
+                      ? "rgba(255,255,255,0.05)"
+                      : "rgba(0,0,0,0.05)",
+                  "&:hover": {
+                    bgcolor:
+                      theme === "dark"
+                        ? "rgba(255,255,255,0.1)"
+                        : "rgba(0,0,0,0.1)",
+                  },
+                }}
               >
-                <ChevronLeftIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-              </button>
+                <ArrowBackIcon />
+              </IconButton>
             )}
-            {isLoadedConversation && (
-              <button
-                onClick={handleBackToHistory}
-                className="p-2 rounded-lg bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 backdrop-blur-sm shadow-sm hover:shadow-md"
-                aria-label="Back to history"
+            <Box>
+              <Typography
+                variant="h6"
+                onClick={handleBackToProjects}
+                sx={{
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  background:
+                    theme === "dark"
+                      ? "linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #34d399 100%)"
+                      : "linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #10b981 100%)",
+                  backgroundClip: "text",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontSize: { xs: "1rem", sm: "1.25rem" },
+                  "&:hover": {
+                    opacity: 0.8,
+                  },
+                }}
               >
-                <ChevronLeftIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-              </button>
-            )}
-            <div>
-              <nav aria-label="Breadcrumb">
-                <div className="flex items-center">
-                  <button
-                    onClick={handleBackToProjects}
-                    className="text-slate-800 dark:text-slate-100 text-lg sm:text-3xl font-bold tracking-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 rounded-md px-1 -mx-1"
-                    aria-label="Back to project selection"
-                  >
-                    Claude Code Web UI
-                  </button>
-                  {(isHistoryView || sessionId) && (
-                    <>
-                      <span
-                        className="text-slate-800 dark:text-slate-100 text-lg sm:text-3xl font-bold tracking-tight mx-3 select-none"
-                        aria-hidden="true"
-                      >
-                        {" "}
-                        ›{" "}
-                      </span>
-                      <h1
-                        className="text-slate-800 dark:text-slate-100 text-lg sm:text-3xl font-bold tracking-tight"
-                        aria-current="page"
-                      >
-                        {isHistoryView
-                          ? "Conversation History"
-                          : "Conversation"}
-                      </h1>
-                    </>
-                  )}
-                </div>
-              </nav>
+                {t("appName")}
+              </Typography>
               {workingDirectory && (
-                <div className="flex items-center text-sm font-mono mt-1">
-                  <button
-                    onClick={handleBackToProjectChat}
-                    className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 rounded px-1 -mx-1 cursor-pointer"
-                    aria-label={`Return to new chat in ${workingDirectory}`}
-                  >
-                    {workingDirectory}
-                  </button>
-                  {sessionId && (
-                    <span className="ml-2 text-xs text-slate-600 dark:text-slate-400">
-                      Session: {sessionId.substring(0, 8)}...
-                    </span>
-                  )}
-                </div>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    color: theme === "dark" ? "grey.500" : "grey.600",
+                    fontSize: "0.7rem",
+                  }}
+                >
+                  {workingDirectory}
+                  {sessionId && ` • ${sessionId.substring(0, 8)}...`}
+                </Typography>
               )}
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {!isHistoryView && <HistoryButton onClick={handleHistoryClick} />}
-            <SettingsButton onClick={handleSettingsClick} />
-          </div>
-        </div>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+            {/* Home Button */}
+            <IconButton
+              onClick={handleBackToProjects}
+              sx={{
+                color: theme === "dark" ? "#60a5fa" : "#2563eb",
+                bgcolor:
+                  theme === "dark"
+                    ? "rgba(96, 165, 250, 0.1)"
+                    : "rgba(37, 99, 235, 0.1)",
+                "&:hover": {
+                  bgcolor:
+                    theme === "dark"
+                      ? "rgba(96, 165, 250, 0.2)"
+                      : "rgba(37, 99, 235, 0.2)",
+                },
+              }}
+              title={t("nav.home")}
+            >
+              <HomeIcon />
+            </IconButton>
+
+            {/* New Project Button - Navigate to homepage to select new project */}
+            <IconButton
+              onClick={handleBackToProjects}
+              sx={{
+                color: theme === "dark" ? "#34d399" : "#10b981",
+                bgcolor:
+                  theme === "dark"
+                    ? "rgba(52, 211, 153, 0.1)"
+                    : "rgba(16, 185, 129, 0.1)",
+                "&:hover": {
+                  bgcolor:
+                    theme === "dark"
+                      ? "rgba(52, 211, 153, 0.2)"
+                      : "rgba(16, 185, 129, 0.2)",
+                },
+              }}
+              title={t("nav.projects")}
+            >
+              <AddIcon />
+            </IconButton>
+
+            {/* Language Toggle */}
+            <ToggleButtonGroup
+              value={language}
+              exclusive
+              onChange={handleLanguageChange}
+              size="small"
+              sx={{
+                bgcolor:
+                  theme === "dark"
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.05)",
+                borderRadius: 2,
+                "& .MuiToggleButton-root": {
+                  border: "none",
+                  color: theme === "dark" ? "grey.400" : "grey.600",
+                  px: 1.5,
+                  py: 0.5,
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  "&.Mui-selected": {
+                    bgcolor:
+                      theme === "dark"
+                        ? "rgba(59, 130, 246, 0.3)"
+                        : "rgba(37, 99, 235, 0.15)",
+                    color: theme === "dark" ? "#60a5fa" : "#2563eb",
+                  },
+                },
+              }}
+            >
+              <ToggleButton value="en">EN</ToggleButton>
+              <ToggleButton value="zh">ZH</ToggleButton>
+            </ToggleButtonGroup>
+
+            {/* Theme Toggle */}
+            <IconButton
+              onClick={toggleTheme}
+              sx={{
+                color: theme === "dark" ? "grey.400" : "grey.600",
+                bgcolor:
+                  theme === "dark"
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.05)",
+                "&:hover": {
+                  bgcolor:
+                    theme === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
+                },
+              }}
+            >
+              {theme === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+
+            {/* History */}
+            {!isHistoryView && (
+              <IconButton
+                onClick={handleHistoryClick}
+                sx={{
+                  color: theme === "dark" ? "grey.400" : "grey.600",
+                  bgcolor:
+                    theme === "dark"
+                      ? "rgba(255,255,255,0.05)"
+                      : "rgba(0,0,0,0.05)",
+                  "&:hover": {
+                    bgcolor:
+                      theme === "dark"
+                        ? "rgba(255,255,255,0.1)"
+                        : "rgba(0,0,0,0.1)",
+                  },
+                }}
+              >
+                <HistoryIcon />
+              </IconButton>
+            )}
+
+            {/* Settings */}
+            <IconButton
+              onClick={() => setIsSettingsOpen(true)}
+              sx={{
+                color: theme === "dark" ? "grey.400" : "grey.600",
+                bgcolor:
+                  theme === "dark"
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.05)",
+                "&:hover": {
+                  bgcolor:
+                    theme === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
+                },
+              }}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Box>
+        </Box>
 
         {/* Main Content */}
         {isHistoryView ? (
@@ -520,48 +710,37 @@ export function ChatPage() {
             onBack={handleBackToChat}
           />
         ) : historyLoading ? (
-          /* Loading conversation history */
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-slate-600 dark:text-slate-400">
-                Loading conversation history...
-              </p>
-            </div>
-          </div>
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2,
+            }}
+          >
+            <CircularProgress
+              sx={{ color: theme === "dark" ? "#60a5fa" : "#2563eb" }}
+            />
+            <Typography color="text.secondary">
+              {t("status.loading")}
+            </Typography>
+          </Box>
         ) : historyError ? (
-          /* Error loading conversation history */
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center max-w-md">
-              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-8 h-8 text-red-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-slate-800 dark:text-slate-100 text-xl font-semibold mb-2">
-                Error Loading Conversation
-              </h2>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">
-                {historyError}
-              </p>
-              <button
-                onClick={() => navigate({ search: "" })}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Start New Conversation
-              </button>
-            </div>
-          </div>
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              gap: 2,
+            }}
+          >
+            <Typography color="error">{historyError}</Typography>
+          </Box>
         ) : (
           <>
             {/* Chat Messages */}
@@ -581,12 +760,26 @@ export function ChatPage() {
               permissionData={permissionData}
               planPermissionData={planPermissionData}
             />
+
+            {/* Quick Actions */}
+            {messages.length === 0 && !isLoading && (
+              <QuickActions
+                onAction={(prompt) => {
+                  setInput(prompt);
+                }}
+                theme={theme}
+                disabled={isLoading}
+              />
+            )}
           </>
         )}
 
         {/* Settings Modal */}
-        <SettingsModal isOpen={isSettingsOpen} onClose={handleSettingsClose} />
-      </div>
-    </div>
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+      </Box>
+    </Box>
   );
 }

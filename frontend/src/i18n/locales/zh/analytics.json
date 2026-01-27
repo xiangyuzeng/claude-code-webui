@@ -1,0 +1,42 @@
+{
+  "title": "数据分析仪表盘",
+  "dataSources": {
+    "title": "数据源",
+    "ec2": "EC2 实例",
+    "k8s": "Kubernetes 集群",
+    "rds": "RDS 数据库",
+    "redis": "Redis 缓存",
+    "status": "连接状态"
+  },
+  "metrics": {
+    "title": "系统指标",
+    "cpu": "CPU 使用率",
+    "memory": "内存使用率",
+    "connections": "活跃连接数",
+    "latency": "响应延迟",
+    "storage": "存储使用率",
+    "requests": "请求速率"
+  },
+  "departments": {
+    "title": "部门仪表盘",
+    "marketing": "营销分析",
+    "product": "产品洞察",
+    "supplyChain": "供应链",
+    "operations": "运营"
+  },
+  "quickActions": {
+    "title": "快捷操作",
+    "newQuery": "新建查询",
+    "viewLogs": "查看日志",
+    "systemHealth": "系统健康",
+    "alerts": "告警"
+  },
+  "timeRange": {
+    "title": "时间范围",
+    "last1h": "最近 1 小时",
+    "last24h": "最近 24 小时",
+    "last7d": "最近 7 天",
+    "last30d": "最近 30 天",
+    "custom": "自定义"
+  }
+}

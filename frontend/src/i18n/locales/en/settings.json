@@ -1,0 +1,56 @@
+{
+  "title": "Settings",
+  "general": "General",
+  "appearance": {
+    "title": "Appearance",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeDescription": "Choose your preferred color scheme"
+  },
+  "language": {
+    "title": "Language",
+    "description": "Select your preferred language",
+    "english": "English",
+    "chinese": "Chinese"
+  },
+  "behavior": {
+    "title": "Behavior",
+    "enterKey": "Enter Key Behavior",
+    "enterSend": "Send message",
+    "enterNewline": "New line",
+    "enterDescription": "Choose what happens when you press Enter",
+    "autoScroll": "Auto-scroll to new messages",
+    "streamSpeed": "Streaming Speed"
+  },
+  "display": {
+    "title": "Display",
+    "fontSize": "Font Size",
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "compactMode": "Compact Mode",
+    "showTimestamps": "Show Timestamps"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "sound": "Sound notifications"
+  },
+  "storage": {
+    "title": "Data & Storage",
+    "clearHistory": "Clear History",
+    "clearHistoryConfirm": "Are you sure you want to clear chat history?",
+    "resetSettings": "Reset All Settings",
+    "resetConfirm": "Are you sure you want to reset all settings?"
+  },
+  "quickActions": {
+    "review": "Code Review",
+    "debug": "Debug",
+    "docs": "Generate Docs",
+    "refactor": "Refactor",
+    "optimize": "Optimize",
+    "security": "Security Scan",
+    "architecture": "Architecture",
+    "test": "Generate Tests"
+  }
+}

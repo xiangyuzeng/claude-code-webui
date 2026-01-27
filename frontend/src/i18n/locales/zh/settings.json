@@ -1,0 +1,56 @@
+{
+  "title": "设置",
+  "general": "通用",
+  "appearance": {
+    "title": "外观",
+    "theme": "主题",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "themeDescription": "选择您喜欢的配色方案"
+  },
+  "language": {
+    "title": "语言",
+    "description": "选择您的首选语言",
+    "english": "英语",
+    "chinese": "中文"
+  },
+  "behavior": {
+    "title": "行为",
+    "enterKey": "回车键行为",
+    "enterSend": "发送消息",
+    "enterNewline": "换行",
+    "enterDescription": "选择按下回车键时的操作",
+    "autoScroll": "自动滚动到新消息",
+    "streamSpeed": "流式输出速度"
+  },
+  "display": {
+    "title": "显示",
+    "fontSize": "字体大小",
+    "small": "小",
+    "medium": "中",
+    "large": "大",
+    "compactMode": "紧凑模式",
+    "showTimestamps": "显示时间戳"
+  },
+  "notifications": {
+    "title": "通知",
+    "sound": "声音通知"
+  },
+  "storage": {
+    "title": "数据与存储",
+    "clearHistory": "清除历史",
+    "clearHistoryConfirm": "确定要清除聊天历史吗？",
+    "resetSettings": "重置所有设置",
+    "resetConfirm": "确定要重置所有设置吗？"
+  },
+  "quickActions": {
+    "review": "代码审查",
+    "debug": "调试问题",
+    "docs": "生成文档",
+    "refactor": "重构代码",
+    "optimize": "性能优化",
+    "security": "安全扫描",
+    "architecture": "架构分析",
+    "test": "生成测试"
+  }
+}

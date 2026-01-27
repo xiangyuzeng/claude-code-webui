@@ -1,0 +1,51 @@
+{
+  "appName": "Luckin Coffee AI Service",
+  "appSubtitle": "AI-Powered Development Assistant",
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "chat": "AI Assistant",
+    "projects": "Projects",
+    "settings": "Settings",
+    "history": "History",
+    "analytics": "Analytics"
+  },
+  "actions": {
+    "send": "Send",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "back": "Back",
+    "refresh": "Refresh",
+    "allow": "Allow",
+    "deny": "Deny",
+    "allowAlways": "Allow Always",
+    "stop": "Stop",
+    "newChat": "New Chat",
+    "continue": "Continue"
+  },
+  "status": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "processing": "Processing...",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "warning": "Warning"
+  },
+  "chat": {
+    "placeholder": "Type your message...",
+    "thinking": "Thinking...",
+    "emptyState": "Start a conversation with the AI assistant",
+    "emptyStateTitle": "Start a conversation with Lucky",
+    "emptyStateSubtitle": "Type your message below to begin",
+    "permissionRequired": "Permission Required",
+    "toolRequest": "Tool Request",
+    "planApproval": "Plan Approval"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "network": "Network error",
+    "timeout": "Request timed out"
+  }
+}

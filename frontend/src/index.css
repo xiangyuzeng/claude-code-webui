@@ -1,3 +1,26 @@
 @import "tailwindcss";
 
 @variant dark (.dark &);
+
+/* Font size settings */
+:root.font-small {
+  font-size: 14px;
+}
+
+:root.font-medium {
+  font-size: 16px;
+}
+
+:root.font-large {
+  font-size: 18px;
+}
+
+/* Compact mode settings */
+:root.compact-mode .chat-message {
+  padding: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+:root.compact-mode .message-container {
+  gap: 0.5rem;
+}

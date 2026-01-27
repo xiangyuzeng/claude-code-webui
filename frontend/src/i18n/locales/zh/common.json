@@ -1,0 +1,51 @@
+{
+  "appName": "瑞幸咖啡智能服务",
+  "appSubtitle": "AI 驱动的开发助手",
+  "nav": {
+    "home": "首页",
+    "dashboard": "仪表盘",
+    "chat": "AI 助手",
+    "projects": "项目",
+    "settings": "设置",
+    "history": "历史记录",
+    "analytics": "数据分析"
+  },
+  "actions": {
+    "send": "发送",
+    "cancel": "取消",
+    "save": "保存",
+    "close": "关闭",
+    "back": "返回",
+    "refresh": "刷新",
+    "allow": "允许",
+    "deny": "拒绝",
+    "allowAlways": "始终允许",
+    "stop": "停止",
+    "newChat": "新对话",
+    "continue": "继续"
+  },
+  "status": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "processing": "处理中...",
+    "connected": "已连接",
+    "disconnected": "已断开",
+    "warning": "警告"
+  },
+  "chat": {
+    "placeholder": "输入您的消息...",
+    "thinking": "思考中...",
+    "emptyState": "开始与 AI 助手对话",
+    "emptyStateTitle": "开始与 Lucky 对话",
+    "emptyStateSubtitle": "在下方输入您的消息开始",
+    "permissionRequired": "需要授权",
+    "toolRequest": "工具请求",
+    "planApproval": "计划审批"
+  },
+  "errors": {
+    "generic": "发生错误",
+    "network": "网络错误",
+    "timeout": "请求超时"
+  }
+}

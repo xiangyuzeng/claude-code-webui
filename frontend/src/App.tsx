@@ -3,6 +3,8 @@ import { Suspense, lazy } from "react";
 import { ProjectSelector } from "./components/ProjectSelector";
 import { ChatPage } from "./components/ChatPage";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { AppThemeProvider } from "~theme/ThemeProvider";
+import { SuspenseLoader } from "~components/common/SuspenseLoader";
 import { isDevelopment } from "./utils/environment";
 
 // Lazy load DemoPage only in development
@@ -17,22 +19,24 @@ const DemoPage = isDevelopment()
 function App() {
   return (
     <SettingsProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<ProjectSelector />} />
-          <Route path="/projects/*" element={<ChatPage />} />
-          {DemoPage && (
-            <Route
-              path="/demo"
-              element={
-                <Suspense fallback={<div>Loading demo...</div>}>
-                  <DemoPage />
-                </Suspense>
-              }
-            />
-          )}
-        </Routes>
-      </Router>
+      <AppThemeProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<ProjectSelector />} />
+            <Route path="/projects/*" element={<ChatPage />} />
+            {DemoPage && (
+              <Route
+                path="/demo"
+                element={
+                  <Suspense fallback={<SuspenseLoader />}>
+                    <DemoPage />
+                  </Suspense>
+                }
+              />
+            )}
+          </Routes>
+        </Router>
+      </AppThemeProvider>
     </SettingsProvider>
   );
 }
