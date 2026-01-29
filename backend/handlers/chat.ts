@@ -36,6 +36,7 @@ interface SDKUserMessage {
     role: "user";
     content: ContentBlock[];
   };
+  parent_tool_use_id: string | null;
 }
 
 /**
@@ -88,6 +89,7 @@ function buildPrompt(
                   role: "user" as const,
                   content,
                 },
+                parent_tool_use_id: null,
               },
             };
           }
