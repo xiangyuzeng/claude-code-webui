@@ -1,11 +1,82 @@
 import { Context } from "hono";
 import { query, type PermissionMode } from "@anthropic-ai/claude-code";
-import type { ChatRequest, StreamResponse } from "../../shared/types.ts";
+import type {
+  ChatRequest,
+  StreamResponse,
+  ImageAttachment,
+} from "../../shared/types.ts";
 import { logger } from "../utils/logger.ts";
+
+/**
+ * Content block for multimodal messages
+ */
+interface ImageContent {
+  type: "image";
+  source: {
+    type: "base64";
+    media_type: string;
+    data: string;
+  };
+}
+
+interface TextContent {
+  type: "text";
+  text: string;
+}
+
+type ContentBlock = ImageContent | TextContent;
+
+/**
+ * User message format for multimodal input
+ */
+interface MultimodalUserMessage {
+  role: "user";
+  content: ContentBlock[];
+}
+
+/**
+ * Build prompt for Claude SDK query
+ * If images are present, returns a multimodal message object
+ * Otherwise returns a simple string
+ */
+function buildPrompt(
+  message: string,
+  images?: ImageAttachment[],
+): string | MultimodalUserMessage {
+  if (!images || images.length === 0) {
+    return message;
+  }
+
+  const content: ContentBlock[] = [];
+
+  // Add images first
+  for (const img of images) {
+    content.push({
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: img.mediaType,
+        data: img.base64Data,
+      },
+    });
+  }
+
+  // Add text message
+  content.push({
+    type: "text",
+    text: message,
+  });
+
+  return {
+    role: "user",
+    content,
+  };
+}
 
 /**
  * Executes a Claude command and yields streaming responses
  * @param message - User message or command
+ * @param images - Optional array of image attachments
  * @param requestId - Unique request identifier for abort functionality
  * @param requestAbortControllers - Shared map of abort controllers
  * @param cliPath - Path to actual CLI script (detected by validateClaudeCli)
@@ -17,6 +88,7 @@ import { logger } from "../utils/logger.ts";
  */
 async function* executeClaudeCommand(
   message: string,
+  images: ImageAttachment[] | undefined,
   requestId: string,
   requestAbortControllers: Map<string, AbortController>,
   cliPath: string,
@@ -35,12 +107,15 @@ async function* executeClaudeCommand(
       processedMessage = message.substring(1);
     }
 
+    // Build prompt (string or multimodal message)
+    const prompt = buildPrompt(processedMessage, images);
+
     // Create and store AbortController for this request
     abortController = new AbortController();
     requestAbortControllers.set(requestId, abortController);
 
     for await (const sdkMessage of query({
-      prompt: processedMessage,
+      prompt,
       options: {
         abortController,
         executable: "node" as const,
@@ -106,6 +181,7 @@ export async function handleChatRequest(
       try {
         for await (const chunk of executeClaudeCommand(
           chatRequest.message,
+          chatRequest.images,
           chatRequest.requestId,
           requestAbortControllers,
           cliPath, // Use detected CLI path from validateClaudeCli

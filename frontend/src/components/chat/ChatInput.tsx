@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import {
   Box,
   TextField,
@@ -6,15 +6,18 @@ import {
   Button,
   Typography,
   Paper,
+  CircularProgress,
 } from "@mui/material";
 import StopIcon from "@mui/icons-material/Stop";
 import SendIcon from "@mui/icons-material/Send";
+import ImageIcon from "@mui/icons-material/Image";
 import { useTranslation } from "react-i18next";
 import { KEYBOARD_SHORTCUTS } from "../../utils/constants";
 import { useEnterBehavior } from "../../hooks/useSettings";
 import { PermissionInputPanel } from "./PermissionInputPanel";
 import { PlanPermissionInputPanel } from "./PlanPermissionInputPanel";
-import type { PermissionMode } from "../../types";
+import { ImagePreview } from "./ImagePreview";
+import type { PermissionMode, ImageAttachment } from "../../types";
 
 interface PermissionData {
   patterns: string[];
@@ -60,6 +63,11 @@ interface ChatInputProps {
   showPermissions?: boolean;
   permissionData?: PermissionData;
   planPermissionData?: PlanPermissionData;
+  // Image upload props
+  images?: ImageAttachment[];
+  isUploading?: boolean;
+  onImageUpload?: (files: FileList) => void;
+  onImageRemove?: (id: string) => void;
 }
 
 export function ChatInput({
@@ -74,9 +82,15 @@ export function ChatInput({
   showPermissions = false,
   permissionData,
   planPermissionData,
+  images = [],
+  isUploading = false,
+  onImageUpload,
+  onImageRemove,
 }: ChatInputProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isComposing, setIsComposing] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const { enterBehavior } = useEnterBehavior();
   const { t } = useTranslation();
 
@@ -165,6 +179,62 @@ export function ChatInput({
     return modes[(currentIndex + 1) % modes.length];
   };
 
+  // Handle file input change
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0 && onImageUpload) {
+        onImageUpload(e.target.files);
+      }
+      // Reset file input so the same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    },
+    [onImageUpload],
+  );
+
+  // Handle drag and drop
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
+
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0 && onImageUpload) {
+        // Filter for image files only
+        const imageFiles = Array.from(e.dataTransfer.files).filter((file) =>
+          file.type.startsWith("image/"),
+        );
+        if (imageFiles.length > 0) {
+          const dt = new DataTransfer();
+          imageFiles.forEach((file) => dt.items.add(file));
+          onImageUpload(dt.files);
+        }
+      }
+    },
+    [onImageUpload],
+  );
+
+  // Click to open file picker
+  const handleImageButtonClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  // Check if send should be enabled (has text OR images)
+  const canSend = (input.trim() || images.length > 0) && !isLoading;
+
   // If we're in plan permission mode, show the plan permission panel instead
   if (showPermissions && planPermissionData) {
     return (
@@ -196,86 +266,137 @@ export function ChatInput({
 
   return (
     <Box sx={{ flexShrink: 0 }}>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        multiple
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+
       <Paper
         component="form"
         onSubmit={handleSubmit}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         elevation={0}
         sx={{
           display: "flex",
-          alignItems: "flex-end",
+          flexDirection: "column",
           gap: 1,
           p: 1,
-          border: 1,
-          borderColor: "divider",
+          border: 2,
+          borderColor: isDragOver ? "primary.main" : "divider",
           borderRadius: 3,
-          bgcolor: "background.paper",
+          bgcolor: isDragOver ? "action.hover" : "background.paper",
+          transition: "border-color 0.2s, background-color 0.2s",
         }}
       >
-        <TextField
-          inputRef={inputRef}
-          value={input}
-          onChange={(e) => onInputChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onCompositionStart={handleCompositionStart}
-          onCompositionEnd={handleCompositionEnd}
-          placeholder={
-            isLoading && currentRequestId
-              ? t("status.processing")
-              : t("chat.placeholder")
-          }
-          multiline
-          maxRows={10}
-          disabled={isLoading}
-          fullWidth
-          variant="standard"
-          InputProps={{
-            disableUnderline: true,
-            sx: {
-              px: 1,
-              py: 0.5,
-              fontSize: "0.95rem",
-              minHeight: 48,
-            },
-          }}
-        />
+        {/* Image preview */}
+        {images.length > 0 && (
+          <ImagePreview
+            images={images}
+            onRemove={onImageRemove || (() => {})}
+            disabled={isLoading}
+          />
+        )}
 
-        <Box sx={{ display: "flex", gap: 0.5, pb: 0.5 }}>
-          {isLoading && currentRequestId && (
+        {/* Input row */}
+        <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
+          {/* Image upload button */}
+          {onImageUpload && (
             <IconButton
-              onClick={onAbort}
+              onClick={handleImageButtonClick}
+              disabled={isLoading || isUploading}
               size="small"
               sx={{
-                bgcolor: "error.main",
-                color: "white",
+                color: "text.secondary",
                 "&:hover": {
-                  bgcolor: "error.dark",
+                  color: "primary.main",
                 },
+                mb: 0.5,
               }}
-              title="Stop (ESC)"
+              title={t("chat.attachImage")}
             >
-              <StopIcon fontSize="small" />
+              {isUploading ? (
+                <CircularProgress size={20} />
+              ) : (
+                <ImageIcon fontSize="small" />
+              )}
             </IconButton>
           )}
 
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={!input.trim() || isLoading}
-            size="small"
-            endIcon={<SendIcon />}
-            sx={{
-              minWidth: 80,
-              borderRadius: 2,
-              textTransform: "none",
-              fontWeight: 500,
+          <TextField
+            inputRef={inputRef}
+            value={input}
+            onChange={(e) => onInputChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
+            placeholder={
+              isLoading && currentRequestId
+                ? t("status.processing")
+                : isDragOver
+                  ? t("chat.dropImage")
+                  : t("chat.placeholder")
+            }
+            multiline
+            maxRows={10}
+            disabled={isLoading}
+            fullWidth
+            variant="standard"
+            InputProps={{
+              disableUnderline: true,
+              sx: {
+                px: 1,
+                py: 0.5,
+                fontSize: "0.95rem",
+                minHeight: 48,
+              },
             }}
-          >
-            {isLoading
-              ? "..."
-              : permissionMode === "plan"
-                ? "Plan"
-                : t("actions.send")}
-          </Button>
+          />
+
+          <Box sx={{ display: "flex", gap: 0.5, pb: 0.5 }}>
+            {isLoading && currentRequestId && (
+              <IconButton
+                onClick={onAbort}
+                size="small"
+                sx={{
+                  bgcolor: "error.main",
+                  color: "white",
+                  "&:hover": {
+                    bgcolor: "error.dark",
+                  },
+                }}
+                title="Stop (ESC)"
+              >
+                <StopIcon fontSize="small" />
+              </IconButton>
+            )}
+
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={!canSend}
+              size="small"
+              endIcon={<SendIcon />}
+              sx={{
+                minWidth: 80,
+                borderRadius: 2,
+                textTransform: "none",
+                fontWeight: 500,
+              }}
+            >
+              {isLoading
+                ? "..."
+                : permissionMode === "plan"
+                  ? "Plan"
+                  : t("actions.send")}
+            </Button>
+          </Box>
         </Box>
       </Paper>
 

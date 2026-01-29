@@ -41,7 +41,13 @@
     "emptyStateSubtitle": "Type your message below to begin",
     "permissionRequired": "Permission Required",
     "toolRequest": "Tool Request",
-    "planApproval": "Plan Approval"
+    "planApproval": "Plan Approval",
+    "attachImage": "Attach Image",
+    "dropImage": "Drop image here...",
+    "imageTypeError": "Only JPEG, PNG, GIF, and WebP images are supported",
+    "imageSizeError": "Image size must be under 5MB",
+    "maxImagesError": "Maximum 5 images allowed",
+    "uploadFailed": "Failed to upload image"
   },
   "errors": {
     "generic": "Something went wrong",

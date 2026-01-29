@@ -41,7 +41,13 @@
     "emptyStateSubtitle": "在下方输入您的消息开始",
     "permissionRequired": "需要授权",
     "toolRequest": "工具请求",
-    "planApproval": "计划审批"
+    "planApproval": "计划审批",
+    "attachImage": "添加图片",
+    "dropImage": "拖放图片到这里...",
+    "imageTypeError": "仅支持 JPEG、PNG、GIF 和 WebP 格式的图片",
+    "imageSizeError": "图片大小不能超过 5MB",
+    "maxImagesError": "最多只能添加 5 张图片",
+    "uploadFailed": "图片上传失败"
   },
   "errors": {
     "generic": "发生错误",

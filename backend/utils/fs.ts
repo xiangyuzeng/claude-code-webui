@@ -61,6 +61,23 @@ export async function writeTextFile(
 }
 
 /**
+ * Write binary content to file
+ */
+export async function writeBinaryFile(
+  path: string,
+  content: Uint8Array,
+): Promise<void> {
+  await fs.writeFile(path, content);
+}
+
+/**
+ * Create directory recursively
+ */
+export async function mkdir(path: string): Promise<void> {
+  await fs.mkdir(path, { recursive: true });
+}
+
+/**
  * Check if file or directory exists
  */
 export async function exists(path: string): Promise<boolean> {

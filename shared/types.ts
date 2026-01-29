@@ -4,6 +4,15 @@ export interface StreamResponse {
   error?: string;
 }
 
+// Image attachment type for multimodal messages
+export interface ImageAttachment {
+  id: string;
+  filename: string;
+  mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+  base64Data: string;
+  size: number;
+}
+
 export interface ChatRequest {
   message: string;
   sessionId?: string;
@@ -11,6 +20,14 @@ export interface ChatRequest {
   allowedTools?: string[];
   workingDirectory?: string;
   permissionMode?: "default" | "plan" | "acceptEdits";
+  images?: ImageAttachment[];
+}
+
+// Upload endpoint types
+export interface UploadResponse {
+  success: boolean;
+  image?: ImageAttachment;
+  error?: string;
 }
 
 export interface AbortRequest {

@@ -22,6 +22,7 @@ import type {
   ChatMessage,
   ProjectInfo,
   PermissionMode,
+  ImageAttachment,
 } from "../types";
 import type { Language } from "../types/settings";
 import { useClaudeStreaming } from "../hooks/useClaudeStreaming";
@@ -31,6 +32,7 @@ import { usePermissionMode } from "../hooks/chat/usePermissionMode";
 import { useAbortController } from "../hooks/chat/useAbortController";
 import { useAutoHistoryLoader } from "../hooks/useHistoryLoader";
 import { useSettings, useLanguage } from "../hooks/useSettings";
+import { useImageUpload, type ImageUploadError } from "../hooks/useImageUpload";
 import { SettingsModal } from "./SettingsModal";
 import { ChatInput } from "./chat/ChatInput";
 import { ChatMessages } from "./chat/ChatMessages";
@@ -67,6 +69,32 @@ export function ChatPage() {
   const { processStreamLine } = useClaudeStreaming();
   const { abortRequest, createAbortHandler } = useAbortController();
   const { permissionMode, setPermissionMode } = usePermissionMode();
+
+  // Image upload handling
+  const handleImageUploadError = useCallback(
+    (error: ImageUploadError) => {
+      // TODO: Show error toast/notification
+      console.error("Image upload error:", error, t(`chat.${error}`));
+    },
+    [t],
+  );
+
+  const {
+    images,
+    isUploading,
+    uploadImages,
+    removeImage,
+    clearImages,
+  } = useImageUpload({
+    onError: handleImageUploadError,
+  });
+
+  const handleImageUpload = useCallback(
+    (files: FileList) => {
+      uploadImages(files);
+    },
+    [uploadImages],
+  );
 
   const getEncodedName = useCallback(() => {
     if (!workingDirectory || !projects.length) return null;
@@ -146,9 +174,13 @@ export function ChatPage() {
       tools?: string[],
       hideUserMessage = false,
       overridePermissionMode?: PermissionMode,
+      messageImages?: ImageAttachment[],
     ) => {
       const content = messageContent || input.trim();
-      if (!content || isLoading) return;
+      const imagesToSend = messageImages || images;
+
+      // Allow sending if there's content OR images
+      if ((!content && imagesToSend.length === 0) || isLoading) return;
 
       const requestId = generateRequestId();
 
@@ -156,13 +188,17 @@ export function ChatPage() {
         const userMessage: ChatMessage = {
           type: "chat",
           role: "user",
-          content: content,
+          content: content || "(image)",
           timestamp: Date.now(),
+          images: imagesToSend.length > 0 ? imagesToSend : undefined,
         };
         addMessage(userMessage);
       }
 
-      if (!messageContent) clearInput();
+      if (!messageContent) {
+        clearInput();
+        clearImages(); // Clear images after sending
+      }
       startRequest();
 
       try {
@@ -170,12 +206,13 @@ export function ChatPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            message: content,
+            message: content || "Please describe this image.",
             requestId,
             ...(currentSessionId ? { sessionId: currentSessionId } : {}),
             allowedTools: tools || allowedTools,
             ...(workingDirectory ? { workingDirectory } : {}),
             permissionMode: overridePermissionMode || permissionMode,
+            ...(imagesToSend.length > 0 ? { images: imagesToSend } : {}),
           } as ChatRequest),
         });
 
@@ -237,6 +274,7 @@ export function ChatPage() {
     },
     [
       input,
+      images,
       isLoading,
       currentSessionId,
       allowedTools,
@@ -246,6 +284,7 @@ export function ChatPage() {
       permissionMode,
       generateRequestId,
       clearInput,
+      clearImages,
       startRequest,
       addMessage,
       updateLastMessage,
@@ -759,6 +798,10 @@ export function ChatPage() {
               showPermissions={isPermissionMode}
               permissionData={permissionData}
               planPermissionData={planPermissionData}
+              images={images}
+              isUploading={isUploading}
+              onImageUpload={handleImageUpload}
+              onImageRemove={removeImage}
             />
 
             {/* Quick Actions */}
