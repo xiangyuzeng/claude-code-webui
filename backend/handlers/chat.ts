@@ -27,22 +27,26 @@ interface TextContent {
 type ContentBlock = ImageContent | TextContent;
 
 /**
- * User message format for multimodal input
+ * SDK User Message type for AsyncIterable prompt
+ * Based on Claude Code SDK expected format
  */
-interface MultimodalUserMessage {
-  role: "user";
-  content: ContentBlock[];
+interface SDKUserMessage {
+  type: "user";
+  message: {
+    role: "user";
+    content: ContentBlock[];
+  };
 }
 
 /**
  * Build prompt for Claude SDK query
- * If images are present, returns a multimodal message object
+ * If images are present, returns an AsyncIterable that yields SDKUserMessage
  * Otherwise returns a simple string
  */
 function buildPrompt(
   message: string,
   images?: ImageAttachment[],
-): string | MultimodalUserMessage {
+): string | AsyncIterable<SDKUserMessage> {
   if (!images || images.length === 0) {
     return message;
   }
@@ -67,9 +71,32 @@ function buildPrompt(
     text: message,
   });
 
+  // Return an AsyncIterable that yields the user message
+  // and keeps the iterator open until Claude is done processing
   return {
-    role: "user",
-    content,
+    [Symbol.asyncIterator](): AsyncIterator<SDKUserMessage> {
+      let yielded = false;
+      return {
+        async next(): Promise<IteratorResult<SDKUserMessage>> {
+          if (!yielded) {
+            yielded = true;
+            return {
+              done: false,
+              value: {
+                type: "user" as const,
+                message: {
+                  role: "user" as const,
+                  content,
+                },
+              },
+            };
+          }
+          // Keep the iterator open by returning a never-resolving promise
+          // This ensures hooks and canUseTool work correctly (see Issue #9705)
+          return new Promise<IteratorResult<SDKUserMessage>>(() => {});
+        },
+      };
+    },
   };
 }
 
