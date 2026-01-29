@@ -1,5 +1,9 @@
 import { Context } from "hono";
-import { query, type PermissionMode } from "@anthropic-ai/claude-code";
+import {
+  query,
+  type PermissionMode,
+  type SDKUserMessage,
+} from "@anthropic-ai/claude-code";
 import type {
   ChatRequest,
   StreamResponse,
@@ -27,26 +31,14 @@ interface TextContent {
 type ContentBlock = ImageContent | TextContent;
 
 /**
- * SDK User Message type for AsyncIterable prompt
- * Based on Claude Code SDK expected format
- */
-interface SDKUserMessage {
-  type: "user";
-  message: {
-    role: "user";
-    content: ContentBlock[];
-  };
-  parent_tool_use_id: string | null;
-}
-
-/**
  * Build prompt for Claude SDK query
  * If images are present, returns an AsyncIterable that yields SDKUserMessage
  * Otherwise returns a simple string
  */
 function buildPrompt(
   message: string,
-  images?: ImageAttachment[],
+  images: ImageAttachment[] | undefined,
+  sessionId: string | undefined,
 ): string | AsyncIterable<SDKUserMessage> {
   if (!images || images.length === 0) {
     return message;
@@ -72,6 +64,9 @@ function buildPrompt(
     text: message,
   });
 
+  // Generate a session ID if not provided (required by SDK)
+  const effectiveSessionId = sessionId || crypto.randomUUID();
+
   // Return an AsyncIterable that yields the user message
   // and keeps the iterator open until Claude is done processing
   return {
@@ -84,13 +79,14 @@ function buildPrompt(
             return {
               done: false,
               value: {
-                type: "user" as const,
+                type: "user",
                 message: {
-                  role: "user" as const,
+                  role: "user",
                   content,
                 },
                 parent_tool_use_id: null,
-              },
+                session_id: effectiveSessionId,
+              } as SDKUserMessage,
             };
           }
           // Keep the iterator open by returning a never-resolving promise
@@ -137,7 +133,7 @@ async function* executeClaudeCommand(
     }
 
     // Build prompt (string or multimodal message)
-    const prompt = buildPrompt(processedMessage, images);
+    const prompt = buildPrompt(processedMessage, images, sessionId);
 
     // Create and store AbortController for this request
     abortController = new AbortController();
